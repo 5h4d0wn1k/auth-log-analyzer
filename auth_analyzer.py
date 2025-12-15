@@ -14,11 +14,28 @@ import re
 from collections import Counter, defaultdict
 from typing import Dict, List
 
-FAIL_RE = re.compile(r"Failed password for (invalid user )?(?P<user>\\S+) from (?P<ip>\\S+)")
-OK_RE = re.compile(r"Accepted \\S+ for (?P<user>\\S+) from (?P<ip>\\S+)")
+FAIL_RE = re.compile(r"Failed password for (invalid user )?(?P<user>\S+) from (?P<ip>\S+)")
+OK_RE = re.compile(r"Accepted \S+ for (?P<user>\S+) from (?P<ip>\S+)")
 
 
 def parse_lines(lines: List[str]) -> Dict[str, object]:
+    """
+    Parse authentication log lines and detect security patterns.
+    
+    Analyzes log lines for:
+    - Failed password attempts per IP
+    - Username spraying (multiple users from same IP)
+    - Successful logins after multiple failures
+    
+    Args:
+        lines: List of log line strings to analyze.
+        
+    Returns:
+        Dictionary containing:
+        - top_fail_ips: List of (IP, count) tuples for IPs with most failures
+        - spray_ips: List of (IP, count) tuples for IPs attempting multiple users
+        - success_after_fail: List of dicts with user/IP pairs that succeeded after failures
+    """
     fails_per_ip: Counter[str] = Counter()
     fails_per_user_ip: Counter[tuple[str, str]] = Counter()
     user_success_ip: Dict[tuple[str, str], int] = {}

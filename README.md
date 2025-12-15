@@ -44,10 +44,10 @@ python auth_analyzer.py --log /var/log/auth.log
 ### Save Results
 
 ```bash
-# Save analysis to JSON file
+# Save results to JSON file
 python auth_analyzer.py \
   --log /var/log/auth.log \
-  --json-out analysis.json
+  --json-out auth_analysis.json
 ```
 
 ## Command-Line Options
@@ -55,16 +55,16 @@ python auth_analyzer.py \
 | Option | Description |
 |--------|-------------|
 | `--log` | Path to authentication log file (required) |
-| `--json-out` | Save results to JSON file | stdout |
+| `--json-out` | Save results to JSON file |
 
 ## Log Format
 
-The tool expects standard authentication log format (e.g., `/var/log/auth.log`):
+The tool expects standard Linux authentication logs (auth.log) with entries like:
 
 ```
 Failed password for invalid user admin from 192.168.1.100
-Failed password for user root from 192.168.1.100
-Accepted publickey for user admin from 192.168.1.50
+Accepted publickey for user from 192.168.1.50
+Failed password for root from 10.0.0.1
 ```
 
 ## Output Format
@@ -75,7 +75,7 @@ Accepted publickey for user admin from 192.168.1.50
 {
   "top_fail_ips": [
     ["192.168.1.100", 150],
-    ["10.0.0.50", 75]
+    ["10.0.0.1", 89]
   ],
   "spray_ips": [
     ["192.168.1.100", 5]
@@ -84,66 +84,67 @@ Accepted publickey for user admin from 192.168.1.50
     {
       "user": "admin",
       "ip": "192.168.1.100",
-      "fails": 10,
+      "fails": 45,
       "success": 1
     }
   ]
 }
 ```
 
-## Detections
+## Detected Patterns
 
-### Brute Force Attacks
+### 1. Brute Force Attacks
 
 Identifies IPs with high numbers of failed login attempts:
-- **Threshold**: Configurable (default: top 10 IPs)
-- **Indicators**: Multiple failed attempts from same IP
+- **Threshold**: Multiple failed attempts from same IP
+- **Severity**: High
+- **Action**: Block IP, investigate source
 
-### Credential Spraying
+### 2. Credential Spraying
 
 Detects username enumeration attacks:
-- **Pattern**: Multiple users attempted from same IP
-- **Threshold**: 3+ users per IP
+- **Pattern**: Multiple different usernames from same IP
+- **Threshold**: 3+ different users per IP
+- **Severity**: Medium-High
+- **Action**: Monitor IP, implement rate limiting
 
-### Success After Failure
+### 3. Success After Failure
 
 Identifies successful logins after multiple failures:
-- **Risk**: Compromised credentials
-- **Action**: Review and investigate
+- **Pattern**: Successful login after failed attempts
+- **Severity**: High (potential compromised account)
+- **Action**: Investigate account, force password reset
 
 ## Examples
 
 ### Example 1: Basic Analysis
 
 ```bash
-# Analyze authentication log
-python auth_analyzer.py \
-  --log /var/log/auth.log \
-  --json-out auth_analysis.json
+# Analyze auth log
+python auth_analyzer.py --log /var/log/auth.log
 ```
 
-### Example 2: Security Monitoring
+### Example 2: Save Report
 
 ```bash
-# Regular monitoring
+# Save analysis to JSON
 python auth_analyzer.py \
   --log /var/log/auth.log \
-  --json-out daily_analysis.json
+  --json-out security_report.json
 ```
 
 ## Use Cases
 
-- **Security Monitoring**: Detect brute force and spraying attacks
-- **Threat Detection**: Identify suspicious authentication patterns
-- **Incident Response**: Analyze authentication logs during incidents
-- **Educational Purposes**: Learn about log analysis techniques
+- **Security Monitoring**: Detect attacks in real-time
+- **Incident Response**: Analyze authentication logs
+- **Threat Detection**: Identify suspicious patterns
+- **Educational Purposes**: Learn about authentication attacks
 
 ## Legal Disclaimer
 
 ⚠️ **IMPORTANT**: This tool is for authorized security analysis and educational purposes only.
 
-- Only analyze log files you own or have explicit written authorization to analyze
-- Respect privacy and data protection regulations
+- Only analyze logs you own or have explicit written authorization to analyze
 - Follow responsible disclosure practices
 - Comply with all applicable laws and regulations
 
@@ -162,4 +163,4 @@ This project is for educational purposes only. Use responsibly and ethically.
 
 ---
 
-**Remember**: Only analyze log files you own or have explicit authorization to analyze!
+**Remember**: Only analyze logs you own or have explicit authorization to analyze!
