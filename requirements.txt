@@ -1,0 +1,7 @@
+# Requirements
+# Python 3.8+
+
+# No external dependencies - uses only Python standard library
+
+# Optional dependencies for enhanced functionality
+# rich>=13.0.0  # For enhanced terminal output (optional)
